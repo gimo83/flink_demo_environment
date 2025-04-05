@@ -1,0 +1,8 @@
+- name: install database
+  hosts: database_server
+  user: root
+  tasks:
+
+  - name: install mariadb server
+    ansible.builtin.apt:
+      name: mariadb-server

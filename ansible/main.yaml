@@ -1,0 +1,12 @@
+
+- name: Include OS patching
+  import_playbook: os_patch.yaml
+
+- name: Include OS configuration
+  import_playbook: os_config.yaml
+
+- name: include DB installation
+  import_playbook: db_config.yaml
+
+- name: include flink installation & config
+  import_playbook: flink_config.yaml

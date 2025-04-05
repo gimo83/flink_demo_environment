@@ -1,0 +1,60 @@
+- name: OS config
+  hosts: all
+  user: root
+  tasks:
+  
+  - name: update host file flink-node-db
+    lineinfile:
+      path: /etc/hosts
+      line: '192.168.10.176   flink-node-db'
+  
+  - name: update host file flink-node-1
+    lineinfile:
+      path: /etc/hosts
+      line: '192.168.10.177   flink-node-1'
+  
+  - name: update host file flink-node-2
+    lineinfile:
+      path: /etc/hosts
+      line: '192.168.10.178   flink-node-2'
+  
+  - name: update host file flink-node-3
+    lineinfile:
+      path: /etc/hosts
+      line: '192.168.10.179   flink-node-3'
+  
+  - name: add ssh server key flink-nodes to known_host
+    command:
+      cmd: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
+    loop:
+      - flink-node-db
+      - flink-node-1
+      - flink-node-2
+      - flink-node-3
+  
+  - name: add generate authonication ssh key
+    command:
+      cmd: ssh-keygen -q -t rsa -f ~/.ssh/id_rsa -C "" -N ""
+    args:
+      creates: ~/.ssh/id_rsa
+
+  # - name: copy ssh keys
+  #   authorized_key:
+  #     user: root
+  #     key: "{{ lookup('file', '/home/' + lookup('env', 'USER') + '/.ssh/id_rsa.pub') }}"
+  
+  - name: copy nodes ssh pub key to local folder
+    fetch:
+      src: ~/.ssh/id_rsa.pub
+      dest: "/tmp/{{ansible_hostname}}/id_rsa.pub"
+      flat: yes
+
+  - name: copy ssh to local
+    authorized_key:
+      user: root
+      key: "{{ lookup('file', '/tmp/{{ item }}/id_rsa.pub') }}"
+    loop:
+      - flink-node-db
+      - flink-node-1
+      - flink-node-2
+      - flink-node-3

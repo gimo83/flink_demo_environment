@@ -1,0 +1,105 @@
+---
+- name: install flink
+  hosts: flink_server
+  user: root
+  tasks:
+
+  - name: install java
+    ansible.builtin.apt:
+      name: default-jdk-headless
+
+  - name: Download flink
+    ansible.builtin.get_url:
+      url: https://dlcdn.apache.org/flink/flink-2.0.0/flink-2.0.0-bin-scala_2.12.tgz
+      dest: /tmp/flink-2.0.0-bin-scala_2.12.tgz
+      checksum: sha512:0edeb57f9bc263faa6b817f783596e0370d11c7b2dd9e9bf8ab42b13f6bc55e026e6ba56415252e8a8c3d2b038313453968618dbf72b2391e0a6b54de41354bc
+  
+  - name: extract archive files
+    ansible.builtin.unarchive:
+      src: /tmp/flink-2.0.0-bin-scala_2.12.tgz
+      dest: /opt/
+      remote_src: yes
+
+  - name: update flink server.1 configuration file
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/zoo.cfg
+      regexp: '^server.1=localhost:2888:3888'
+      state: absent
+  
+  - name: update flink server.2 configuration file
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/zoo.cfg
+      regexp: '^server.2=host:peer-port:leader-port'
+      state: absent
+
+  - name: add zookeeper server-1
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/zoo.cfg
+      regexp: '^server.1='
+      line: 'server.1=flink-node-1:2888:3888'
+      create: yes
+  
+  - name: add zookeeper server-2
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/zoo.cfg
+      regexp: '^server.2='
+      line: 'server.2=flink-node-2:2888:3888'
+      create: yes
+  
+  - name: add zookeeper server-3
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/zoo.cfg
+      regexp: '^server.3='
+      line: 'server.3=flink-node-3:2888:3888'
+      create: yes
+  
+  - name: update flink masters file remove localhost
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/masters
+      line: 'localhost:8081'
+      state: absent
+
+  - name: update flink master file
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/masters
+      regexp: 'flink-node-1:8081'
+      line: 'flink-node-1:8081'
+      create: yes
+  
+  - name: update flink workers file remove localhost
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/workers
+      line: 'localhost'
+      state: absent
+  
+  - name: update flink workers file add node-1
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/workers
+      line: 'flink-node-1'
+      create: yes
+  
+  - name: update flink workers file add node-2
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/workers
+      line: 'flink-node-2'
+      create: yes
+  
+  - name: update flink workers file add node-3
+    lineinfile:
+      path: /opt/flink-2.0.0/conf/workers
+      line: 'flink-node-3'
+      create: yes
+  
+  - name: copy configuration file
+    copy:
+      src: flink/conf/config.yaml
+      dest: /opt/flink-2.0.0/conf/config.yaml
+  
+
+
+  # - name: run flink clester
+  #   command:
+  #     cmd: /opt/flink-2.0.0/bin/start-cluster.sh
+  #   environment:
+  #     JAVA_HOME: /usr/lib/jvm/default-java
+  #     FLINK_HOME: /opt/flink-2.0.0
