@@ -212,3 +212,4 @@ override.tf.json
 terraform.rc
 
 ansible/.venv
+terraform/connection.tf
